@@ -31,6 +31,19 @@ The first importer expects ClaML XML files placed at the paths printed by:
 python scripts/print_source_requirements.py
 ```
 
+## ICD/CIM source year fallback
+
+The tariff year and the ICD/CIM source year are configured separately. For example, if no BFS 2027 ClaML files are available yet, a 2027 tariff database can be built with locally provided BFS 2026 ICD/CIM files:
+
+```bash
+python scripts/build_database.py --year 2027 --icd-year 2026 --force
+```
+
+The generated SQLite database stores both values in `import_metadata`:
+
+- `year`: tariff/catalogue year
+- `icd_year`: BFS ICD/CIM source year
+
 ## Local verification without publishing data
 
 Use:

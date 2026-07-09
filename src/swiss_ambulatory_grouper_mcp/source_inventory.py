@@ -22,13 +22,14 @@ class SourceRequirement:
     path: Path
     source_url: str
     notes: str
+    required: bool = True
 
 
 @dataclass(frozen=True)
 class SourceStatus(SourceRequirement):
-    present: bool
-    size: int | None
-    sha256: str | None
+    present: bool = False
+    size: int | None = None
+    sha256: str | None = None
 
 
 def source_requirements(config: PipelineConfig) -> list[SourceRequirement]:
@@ -37,7 +38,7 @@ def source_requirements(config: PipelineConfig) -> list[SourceRequirement]:
         SourceRequirement("lkaat_db", "OAAT LKAAT SQLite database with LK_* tables", files["lkaat_db"], OAAT_URL, "Obtain from OAAT tariff components/software; convert locally to SQLite if needed."),
         SourceRequirement("tardoc_db", "OAAT TARDOC SQLite database with TD_* tables", files["tardoc_db"], OAAT_URL, "Obtain from OAAT tariff components/software; convert locally to SQLite if needed."),
         SourceRequirement("ambp_file", "OAAT ambulatory flat-rate catalogue CSV", files["ambp_file"], OAAT_URL, "Place a local CSV export here; the source file itself must not be committed."),
-        SourceRequirement("capitulum_file", "OAAT Capitulum/chapter CSV", files["capitulum_file"], OAAT_URL, "Place a local CSV export here; the source file itself must not be committed."),
+        SourceRequirement("capitulum_file", "OAAT Capitulum/chapter CSV", files["capitulum_file"], OAAT_URL, "Optional: place a local CSV export here. If missing, a minimal Capitulum table is derived from AmbP chapter rows.", required=False),
         SourceRequirement("icd10_de_claml", "BFS ICD-10-GM ClaML DE", files["icd10_de_claml"], BFS_DE_URL, "Download from BFS medical coding instruments."),
         SourceRequirement("icd10_fr_claml", "BFS CIM-10-GM ClaML FR", files["icd10_fr_claml"], BFS_FR_URL, "Download from BFS instruments de codage médical."),
         SourceRequirement("icd10_it_claml", "BFS ICD-10-GM ClaML IT", files["icd10_it_claml"], BFS_IT_URL, "Download from BFS strumenti di codifica medica."),
@@ -70,7 +71,7 @@ def sha256_file(path: Path) -> str:
 
 
 def missing_sources(inventory: Iterable[SourceStatus]) -> list[SourceStatus]:
-    return [item for item in inventory if not item.present]
+    return [item for item in inventory if item.required and not item.present]
 
 
 def requirements_markdown(config: PipelineConfig) -> str:
@@ -81,6 +82,9 @@ def requirements_markdown(config: PipelineConfig) -> str:
         "Each user must obtain the required files independently and place them in the configured local data directory.",
         "",
         f"Configured local data directory: `{config.data_dir}`",
+        f"Configured source directory: `{config.source_dir}`",
+        f"Configured output directory: `{config.output_dir}`",
+        f"Tariff year: `{config.year}`; ICD/CIM source year: `{config.icd_year}`",
         "",
         "## Required files",
         "",
@@ -110,7 +114,12 @@ def requirements_markdown(config: PipelineConfig) -> str:
 def format_inventory(inventory: Iterable[SourceStatus]) -> str:
     lines = []
     for item in inventory:
-        status = "OK" if item.present else "MISSING"
+        if item.present:
+            status = "OK"
+        elif item.required:
+            status = "MISSING"
+        else:
+            status = "OPTIONAL-MISSING"
         lines.append(f"[{status}] {item.key}: {item.path}")
         if item.present:
             lines.append(f"       size={item.size} sha256={item.sha256}")
@@ -123,9 +132,19 @@ def format_inventory(inventory: Iterable[SourceStatus]) -> str:
 def cli(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check local external OAAT/BFS source files.")
     parser.add_argument("--year", default=None)
+    parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument("--source-dir", type=Path, default=None)
+    parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument("--icd-year", default=None, help="Use ICD/CIM source files from this BFS year.")
     parser.add_argument("--requirements", action="store_true", help="Print Markdown requirements instead of status.")
     args = parser.parse_args(argv)
-    config = build_config(year=args.year)
+    config = build_config(
+        year=args.year,
+        data_dir=args.data_dir,
+        source_dir=args.source_dir,
+        output_dir=args.output_dir,
+        icd_year=args.icd_year,
+    )
     if args.requirements:
         print(requirements_markdown(config), end="")
         return 0

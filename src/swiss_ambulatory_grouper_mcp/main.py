@@ -19,6 +19,10 @@ from .source_inventory import build_inventory, format_inventory, missing_sources
 def validate_sources(config: PipelineConfig) -> None:
     inventory = build_inventory(config)
     missing = missing_sources(inventory)
+    if config.input_files["ambp_file"].exists():
+        # A separate Capitulum CSV is optional: it can be derived from the
+        # chapter rows in the AmbP catalogue for the first public build.
+        missing = [item for item in missing if item.key != "capitulum_file"]
     if missing:
         raise FileNotFoundError(
             "Missing required external source files:\n"
@@ -39,8 +43,11 @@ def ensure_metadata(output_db: Path, config: PipelineConfig) -> None:
         )
         metadata = {
             "year": config.year,
+            "icd_year": config.icd_year,
             "created_at_utc": datetime.now(timezone.utc).isoformat(),
             "data_dir": str(config.data_dir),
+            "source_dir": str(config.source_dir),
+            "output_dir": str(config.output_dir),
         }
         conn.executemany(
             "INSERT OR REPLACE INTO import_metadata (key, value) VALUES (?, ?)",
@@ -73,7 +80,11 @@ def build_database(config: PipelineConfig, *, force: bool = False) -> dict[str, 
     print(f"  imported {ambp_rows} row(s)")
 
     print("Importing Capitulum...")
-    capitulum_rows = import_capitulum(files["capitulum_file"], config.output_db)
+    capitulum_rows = import_capitulum(
+        files["capitulum_file"],
+        config.output_db,
+        fallback_ambp_file=files["ambp_file"],
+    )
     print(f"  imported {capitulum_rows} row(s)")
 
     print("Importing ICD-10/CIM-10 ClaML DE/FR/IT...")
@@ -99,9 +110,18 @@ def cli(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build local SQLite DB from official local OAAT/BFS sources.")
     parser.add_argument("--year", default=None)
     parser.add_argument("--data-dir", type=Path, default=None)
+    parser.add_argument("--source-dir", type=Path, default=None)
+    parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument("--icd-year", default=None, help="Use ICD/CIM source files from this BFS year, e.g. 2026 for a 2027 tariff build.")
     parser.add_argument("--force", action="store_true", help="Overwrite an existing output SQLite database.")
     args = parser.parse_args(argv)
-    config = build_config(year=args.year, data_dir=args.data_dir)
+    config = build_config(
+        year=args.year,
+        data_dir=args.data_dir,
+        source_dir=args.source_dir,
+        output_dir=args.output_dir,
+        icd_year=args.icd_year,
+    )
     build_database(config, force=args.force)
     return 0
 

@@ -47,9 +47,39 @@ def copy_selected_tables(source_db: Path, destination_db: Path, mapping: dict[st
     return copied
 
 
+def is_ignored_source_table(table_name: str) -> bool:
+    """Return True for temporary/system tables that must not be exported."""
+    return table_name.startswith("sqlite_") or table_name.startswith("~TMP")
+
+
 def copy_tables_with_prefix(source_db: Path, destination_db: Path, prefix: str) -> list[str]:
-    matching = [table for table in list_tables(source_db) if table.startswith(prefix)]
+    matching = [
+        table
+        for table in list_tables(source_db)
+        if table.startswith(prefix) and not is_ignored_source_table(table)
+    ]
     return copy_selected_tables(source_db, destination_db, {table: table for table in matching})
+
+
+def copy_tables_with_destination_prefix(
+    source_db: Path,
+    destination_db: Path,
+    destination_prefix: str,
+) -> list[str]:
+    """Copy all user tables and prefix destination names if needed.
+
+    OAAT source databases often use raw table names such as ``LEISTUNG`` while
+    the public output schema should expose names like ``LK_LEISTUNG`` or
+    ``TD_LEISTUNG``. If a source table already has the target prefix, the name
+    is preserved.
+    """
+    mapping = {}
+    for table in list_tables(source_db):
+        if is_ignored_source_table(table):
+            continue
+        destination = table if table.startswith(destination_prefix) else f"{destination_prefix}{table}"
+        mapping[table] = destination
+    return copy_selected_tables(source_db, destination_db, mapping)
 
 
 def summarize_db(db_path: Path) -> dict[str, object]:

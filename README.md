@@ -15,24 +15,54 @@ Most tariff source files are obtained from OAAT after registration:
 
 https://oaat-otma.ch/gesamt-tarifsystem/tarifkomponenten-und-software
 
-For the first importer version, prepare local files for:
+For the first importer version, the currently expected OAAT files are:
 
-- LKAAT source database/export containing `LK_*` tables
-- TARDOC source database/export containing `TD_*` tables
-- Ambulatory flat-rate catalogue (`AmbP`) as CSV
-- Capitulum/chapter table as CSV
+```text
+sources/oaat/2026/
+  LKAAT_v1.0c_260402_Leistungskatalog_ambulante_Arzttarife.db
+  Anhang_A2_Katalog_des_TARDOC_1.4c_251128_2.db
+  250808_Anhang_A1_Katalog_der_Ambulanten_Pauschalen_CSV_v1.1c.csv
+  capitulum.csv                                      # optional; derived from AmbP CSV if missing
 
-If OAAT provides a different technical format, convert it locally to the expected SQLite/CSV files. Do not commit either the originals or the converted files.
+sources/oaat/2027/
+  Leistungskatalog_ambulante_Arzttarife__LKAAT__1.1.db
+  Anhang_A2_TARDOC_1.5.db
+  Anhang_A1_Katalog_der_Ambulanten_Pauschalen_1.2.csv
+  capitulum.csv                                      # optional; derived from AmbP CSV if missing
+```
+
+Notes:
+
+- LKAAT source tables are exported as `LK_*` tables in the generated SQLite database.
+- TARDOC source tables are exported as `TD_*` tables in the generated SQLite database.
+- Temporary Access/SQLite tables such as `~TMPCLP102981` are ignored.
+- Do not commit either the OAAT originals or locally converted files.
 
 ### BFS ICD-10 / CIM-10 source files
 
 ICD-10/CIM-10 language versions come from the Swiss Federal Statistical Office (BFS) medical coding instrument pages:
 
-- DE: ICD-10-GM ClaML via the German BFS medical coding instruments page
-- FR: CIM-10-GM ClaML via the French BFS instruments de codage médical page
-- IT: ICD-10-GM ClaML via the Italian BFS strumenti di codifica medica page
+- DE: [BFS Medizinische Kodierung / ICD-10-GM](https://www.bfs.admin.ch/bfs/de/home/statistiken/gesundheit/nomenklaturen/medkk/instrumente-medizinische-kodierung.html)
+- FR: [BFS instruments de codage médical / CIM-10-GM](https://www.bfs.admin.ch/bfs/fr/home/statistiques/sante/nomenclatures/medkk/instruments-codage-medical.html)
+- IT: [BFS strumenti di codifica medica / ICD-10-GM](https://www.bfs.admin.ch/bfs/it/home/statistiche/salute/nomenclature/medkk/strumenti-codifica-medica.html)
 
-The importer expects one local ClaML XML file per language.
+Currently expected BFS 2026 files:
+
+```text
+sources/bfs/2026/
+  icd10gm2026syst-claml/Klassifikationsdateien/icd10gm2026syst_claml_20250912.xml
+  dz-f-14.04.01-cim10-gm-2024-02-ClaML-SI/CIM10GM2024_ClaML_S_FR_20241031.xml
+  dz-i-14.04.01-cim10-gm-2024-02-ClaML-SI/ICD10GM2024_ClaML_S_IT_20241031.xml
+```
+
+If a tariff year uses a different ICD/CIM source year, pass `--icd-year`, for example building the 2027 tariff with currently available 2026 ICD/CIM files:
+
+```bash
+python scripts/build_database.py --year 2027 --icd-year 2026 --force
+```
+
+> [!NOTE]
+> At the moment, the 2027 build can be created with BFS ICD-10/CIM-10 source files from 2026 (`--icd-year 2026`) if no separate BFS 2027 ClaML files are available yet. This does **not** mean that ICD/CIM content was published by this repository; it only records that the local 2027 SQLite build uses the locally provided BFS 2026 ICD/CIM files. The selected ICD/CIM source year is stored in the generated database table `import_metadata` as `icd_year`.
 
 ## Local data layout
 
@@ -42,25 +72,22 @@ Recommended layout outside this Git repository:
 _external_data/swiss-ambulatory-grouper-mcp/
   sources/
     oaat/
+      2026/
       2027/
-        lkaat/lkaat.sqlite
-        tardoc/tardoc.sqlite
-        ambp/ambp.csv
-        capitulum/capitulum.csv
     bfs/
-      2027/
-        icd10/de/icd10_de_claml.xml
-        icd10/fr/icd10_fr_claml.xml
-        icd10/it/icd10_it_claml.xml
+      2026/
+      2027/              # when available
   work/
   output/
+    swiss_ambulatory_2026.sqlite
     swiss_ambulatory_2027.sqlite
 ```
 
 Set the workspace explicitly:
 
 ```bash
-export SWISS_AMBULATORY_GROUPER_DATA_DIR=/absolute/path/to/local/non-git-data/swiss-ambulatory-grouper-mcp
+export SWISS_AMBULATORY_GROUPER_SOURCE_DIR=/absolute/path/to/sources
+export SWISS_AMBULATORY_GROUPER_OUTPUT_DIR=/absolute/path/to/output
 ```
 
 or copy `.env.example` to `.env` for your local shell tooling. `.env` is ignored by git.
@@ -74,12 +101,13 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
 
-cp .env.example .env
-# edit .env or export SWISS_AMBULATORY_GROUPER_DATA_DIR manually
+python scripts/print_source_requirements.py --year 2026
+python scripts/check_sources.py --year 2026
+python scripts/build_database.py --year 2026 --force
 
-python scripts/print_source_requirements.py
-python scripts/check_sources.py
-python scripts/build_database.py --force
+python scripts/print_source_requirements.py --year 2027 --icd-year 2026
+python scripts/check_sources.py --year 2027 --icd-year 2026
+python scripts/build_database.py --year 2027 --icd-year 2026 --force
 ```
 
 `check_sources.py` prints missing local files and official source URLs. `build_database.py` only runs after all required local sources are present.
@@ -88,10 +116,10 @@ python scripts/build_database.py --force
 
 The first phase imports only:
 
-- `LK_*` tables from the local LKAAT SQLite source
-- `TD_*` tables from the local TARDOC SQLite source
+- LKAAT source tables into `LK_*` output tables
+- TARDOC source tables into `TD_*` output tables
 - `AmbP` from CSV
-- `Capitulum` from CSV
+- `Capitulum` from `capitulum.csv` or derived from AmbP chapter rows
 - multilingual ICD-10/CIM-10 DE/FR/IT from BFS ClaML XML into `ICD10_Code` and `ICD10_Rubric`
 
 Not included yet:
@@ -108,7 +136,7 @@ pip install -e '.[dev]'
 pytest -q
 ```
 
-Tests use synthetic mini-fixtures only. Do not add official OAAT/BFS data to tests, issues, pull requests, or examples.
+Tests, if present locally, must use synthetic mini-fixtures only. Do not add official OAAT/BFS data to tests, issues, pull requests, or examples.
 
 ## License
 
