@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local configuration
+.env
+.env.*
+!.env.example
+config.local.py
+
+# Hermes local plans/session metadata
+.hermes/
+
+# Local/private test scaffolding for this preparation repo
+# Keep official and synthetic test fixtures out of the public repository unless explicitly reviewed.
+tests/
+
+# External/non-redistributable source data and generated outputs
+_external_data/
+data/
+sources/
+work/
+output/
+preparation_material/
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.mdb
+*.accdb
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*.tsv
+*.zip
+*.json
+*.xml
+*.log
+
+# Keep synthetic test fixtures if explicitly added later
+!tests/fixtures/**
+!tests/**/*.csv
+!tests/**/*.xml
+
+# macOS
+.DS_Store

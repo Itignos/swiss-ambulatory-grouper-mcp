@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swiss-ambulatory-grouper-mcp"
+version = "0.1.0"
+description = "Build a local SQLite database from officially obtained Swiss ambulatory tariff system sources; MCP server layer follows later."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Itignos"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+excel = ["openpyxl>=3.1"]
+
+[project.scripts]
+swiss-ambulatory-build-db = "swiss_ambulatory_grouper_mcp.main:cli"
+swiss-ambulatory-check-sources = "swiss_ambulatory_grouper_mcp.source_inventory:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
