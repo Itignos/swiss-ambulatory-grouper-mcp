@@ -110,13 +110,11 @@ def build_input_files(source_dir: Path, year: str, icd_year: str) -> dict[str, P
             "lkaat_db": oaat_year_dir / "LKAAT_v1.0c_260402_Leistungskatalog_ambulante_Arzttarife.db",
             "tardoc_db": oaat_year_dir / "Anhang_A2_Katalog_des_TARDOC_1.4c_251128_2.db",
             "ambp_file": oaat_year_dir / "250808_Anhang_A1_Katalog_der_Ambulanten_Pauschalen_CSV_v1.1c.csv",
-            "capitulum_file": oaat_year_dir / "capitulum.csv",
         },
         "2027": {
             "lkaat_db": oaat_year_dir / "Leistungskatalog_ambulante_Arzttarife__LKAAT__1.1.db",
             "tardoc_db": oaat_year_dir / "Anhang_A2_TARDOC_1.5.db",
             "ambp_file": oaat_year_dir / "Anhang_A1_Katalog_der_Ambulanten_Pauschalen_1.2.csv",
-            "capitulum_file": oaat_year_dir / "capitulum.csv",
         },
     }
     icd_by_year: dict[str, dict[str, Path]] = {
@@ -138,7 +136,6 @@ def build_input_files(source_dir: Path, year: str, icd_year: str) -> dict[str, P
             "lkaat_db": oaat_year_dir / "lkaat.sqlite",
             "tardoc_db": oaat_year_dir / "tardoc.sqlite",
             "ambp_file": oaat_year_dir / "ambp.csv",
-            "capitulum_file": oaat_year_dir / "capitulum.csv",
         },
     ).copy()
     inputs.update(

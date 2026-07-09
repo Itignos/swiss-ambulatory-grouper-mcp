@@ -1,30 +1,14 @@
-"""Import or derive Capitulum/chapter data into SQLite."""
+"""Derive Capitulum/chapter data from the OAAT AmbP catalogue."""
 from __future__ import annotations
 
 from pathlib import Path
 import sqlite3
 
-from .sqlite_copy import quote_identifier
-from .tabular import import_tabular_file, read_csv_rows
+from .tabular import read_csv_rows
 
 
-def import_capitulum(source_file: Path, output_db: Path, *, fallback_ambp_file: Path | None = None) -> int:
-    """Import Capitulum from CSV or derive a minimal table from AmbP CSV.
-
-    A separate Capitulum source is preferable. If it is not available, OAAT AmbP
-    catalogue rows with codes such as ``Cap00`` are enough to expose a basic
-    chapter table without shipping another source file.
-    """
-    if source_file.exists():
-        return import_tabular_file(source_file, output_db, "Capitulum")
-    if fallback_ambp_file is None or not fallback_ambp_file.exists():
-        raise FileNotFoundError(
-            f"Missing Capitulum source: {source_file}. Provide capitulum.csv or an AmbP CSV fallback."
-        )
-    return derive_capitulum_from_ambp(fallback_ambp_file, output_db)
-
-
-def derive_capitulum_from_ambp(ambp_file: Path, output_db: Path) -> int:
+def import_capitulum(ambp_file: Path, output_db: Path) -> int:
+    """Create ``Capitulum`` from AmbP catalogue rows with ``Cap...`` codes."""
     headers, rows = read_csv_rows(ambp_file)
     lower_headers = [header.lower() for header in headers]
     index = {name: lower_headers.index(name) for name in lower_headers}

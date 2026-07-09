@@ -19,10 +19,6 @@ from .source_inventory import build_inventory, format_inventory, missing_sources
 def validate_sources(config: PipelineConfig) -> None:
     inventory = build_inventory(config)
     missing = missing_sources(inventory)
-    if config.input_files["ambp_file"].exists():
-        # A separate Capitulum CSV is optional: it can be derived from the
-        # chapter rows in the AmbP catalogue for the first public build.
-        missing = [item for item in missing if item.key != "capitulum_file"]
     if missing:
         raise FileNotFoundError(
             "Missing required external source files:\n"
@@ -79,12 +75,8 @@ def build_database(config: PipelineConfig, *, force: bool = False) -> dict[str, 
     ambp_rows = import_ambp(files["ambp_file"], config.output_db)
     print(f"  imported {ambp_rows} row(s)")
 
-    print("Importing Capitulum...")
-    capitulum_rows = import_capitulum(
-        files["capitulum_file"],
-        config.output_db,
-        fallback_ambp_file=files["ambp_file"],
-    )
+    print("Importing Capitulum from AmbP chapter rows...")
+    capitulum_rows = import_capitulum(files["ambp_file"], config.output_db)
     print(f"  imported {capitulum_rows} row(s)")
 
     print("Importing ICD-10/CIM-10 ClaML DE/FR/IT...")

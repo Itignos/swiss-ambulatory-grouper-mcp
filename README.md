@@ -3,7 +3,7 @@
 Open-source tooling to build a **local SQLite database** for the Swiss ambulatory tariff system from officially obtained source files. A Model Context Protocol (MCP) server will be added later on top of this database; this first project phase focuses on reproducible local data preparation.
 
 > [!IMPORTANT]
-> This repository contains **no OAAT tariff data**, **no BFS ICD-10/CIM-10 source files**, and **no generated SQLite database**. The scripts are public; the official source files and generated outputs must stay outside GitHub.
+> This repository contains **no OAAT tariff data**, **no BFS ICD-10/CIM-10 source files**, and **no generated SQLite database**. The scripts are public; the official source files and generated outputs must stay outside GitHub. These source files are subject to their own licenses, terms of use, and/or access conditions, so they cannot be redistributed from this repository.
 
 ## What you need before you can begin
 
@@ -22,19 +22,21 @@ sources/oaat/2026/
   LKAAT_v1.0c_260402_Leistungskatalog_ambulante_Arzttarife.db
   Anhang_A2_Katalog_des_TARDOC_1.4c_251128_2.db
   250808_Anhang_A1_Katalog_der_Ambulanten_Pauschalen_CSV_v1.1c.csv
-  capitulum.csv                                      # optional; derived from AmbP CSV if missing
 
 sources/oaat/2027/
   Leistungskatalog_ambulante_Arzttarife__LKAAT__1.1.db
   Anhang_A2_TARDOC_1.5.db
   Anhang_A1_Katalog_der_Ambulanten_Pauschalen_1.2.csv
-  capitulum.csv                                      # optional; derived from AmbP CSV if missing
 ```
 
 Notes:
 
+- The official OAAT technical delivery is typically a Microsoft Access database (`.mdb` / `.accdb`). Before running this importer, convert the relevant Access databases locally to SQLite (`.db` / `.sqlite`).
+  - macOS example: [MDB ACCDB Viewer](https://apps.apple.com/ch/app/mdb-accdb-viewer/id417392270?l=de-DE&mt=12) can export Access databases for local conversion workflows.
+  - On Windows, Microsoft Access itself may be sufficient for exporting the tables into an intermediate format that can then be imported into SQLite.
 - LKAAT source tables are exported as `LK_*` tables in the generated SQLite database.
 - TARDOC source tables are exported as `TD_*` tables in the generated SQLite database.
+- The `Capitulum` table is generated from the chapter rows in the AmbP catalogue.
 - Temporary Access/SQLite tables such as `~TMPCLP102981` are ignored.
 - Do not commit either the OAAT originals or locally converted files.
 
@@ -119,7 +121,7 @@ The first phase imports only:
 - LKAAT source tables into `LK_*` output tables
 - TARDOC source tables into `TD_*` output tables
 - `AmbP` from CSV
-- `Capitulum` from `capitulum.csv` or derived from AmbP chapter rows
+- `Capitulum` generated from AmbP chapter rows
 - multilingual ICD-10/CIM-10 DE/FR/IT from BFS ClaML XML into `ICD10_Code` and `ICD10_Rubric`
 
 Not included yet:

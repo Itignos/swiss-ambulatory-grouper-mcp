@@ -1,6 +1,6 @@
 # Data sources
 
-This repository intentionally does not redistribute official tariff, coding, or generated database files.
+This repository intentionally does not redistribute official tariff, coding, or generated database files. These external source files are subject to their own licenses, terms of use, and/or access conditions; contributors and users must obtain them directly from the official providers.
 
 ## OAAT
 

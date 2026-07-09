@@ -12,7 +12,6 @@ _external_data/swiss-ambulatory-grouper-mcp/
         lkaat/lkaat.sqlite
         tardoc/tardoc.sqlite
         ambp/ambp.csv
-        capitulum/capitulum.csv
     bfs/
       2027/
         icd10/de/icd10_de_claml.xml

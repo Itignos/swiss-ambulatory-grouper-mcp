@@ -22,7 +22,6 @@ class SourceRequirement:
     path: Path
     source_url: str
     notes: str
-    required: bool = True
 
 
 @dataclass(frozen=True)
@@ -37,8 +36,7 @@ def source_requirements(config: PipelineConfig) -> list[SourceRequirement]:
     return [
         SourceRequirement("lkaat_db", "OAAT LKAAT SQLite database with LK_* tables", files["lkaat_db"], OAAT_URL, "Obtain from OAAT tariff components/software; convert locally to SQLite if needed."),
         SourceRequirement("tardoc_db", "OAAT TARDOC SQLite database with TD_* tables", files["tardoc_db"], OAAT_URL, "Obtain from OAAT tariff components/software; convert locally to SQLite if needed."),
-        SourceRequirement("ambp_file", "OAAT ambulatory flat-rate catalogue CSV", files["ambp_file"], OAAT_URL, "Place a local CSV export here; the source file itself must not be committed."),
-        SourceRequirement("capitulum_file", "OAAT Capitulum/chapter CSV", files["capitulum_file"], OAAT_URL, "Optional: place a local CSV export here. If missing, a minimal Capitulum table is derived from AmbP chapter rows.", required=False),
+        SourceRequirement("ambp_file", "OAAT ambulatory flat-rate catalogue CSV", files["ambp_file"], OAAT_URL, "Place a local CSV export here; Capitulum is derived from this AmbP catalogue."),
         SourceRequirement("icd10_de_claml", "BFS ICD-10-GM ClaML DE", files["icd10_de_claml"], BFS_DE_URL, "Download from BFS medical coding instruments."),
         SourceRequirement("icd10_fr_claml", "BFS CIM-10-GM ClaML FR", files["icd10_fr_claml"], BFS_FR_URL, "Download from BFS instruments de codage médical."),
         SourceRequirement("icd10_it_claml", "BFS ICD-10-GM ClaML IT", files["icd10_it_claml"], BFS_IT_URL, "Download from BFS strumenti di codifica medica."),
@@ -71,7 +69,7 @@ def sha256_file(path: Path) -> str:
 
 
 def missing_sources(inventory: Iterable[SourceStatus]) -> list[SourceStatus]:
-    return [item for item in inventory if item.required and not item.present]
+    return [item for item in inventory if not item.present]
 
 
 def requirements_markdown(config: PipelineConfig) -> str:
@@ -114,12 +112,7 @@ def requirements_markdown(config: PipelineConfig) -> str:
 def format_inventory(inventory: Iterable[SourceStatus]) -> str:
     lines = []
     for item in inventory:
-        if item.present:
-            status = "OK"
-        elif item.required:
-            status = "MISSING"
-        else:
-            status = "OPTIONAL-MISSING"
+        status = "OK" if item.present else "MISSING"
         lines.append(f"[{status}] {item.key}: {item.path}")
         if item.present:
             lines.append(f"       size={item.size} sha256={item.sha256}")
