@@ -1,0 +1,19 @@
+services:
+  swiss-ambulatory-grouper-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TARIFMATCHER_JAR: /data/output/runtime/tarifmatcher/2027/tarifmatcher-1.2.0-standalone.jar
+      TARIFMATCHER_DATA_DIR: /data/output/runtime/tarifmatcher/2027
+      TARIFMATCHER_TARIFF_YEAR: "2027"
+      TARIFMATCHER_ICD_YEAR: "2026"
+      SWISS_AMBULATORY_GROUPER_DB: /data/output/swiss_ambulatory_2027.sqlite
+      TARIFMATCHER_BASE_URL: http://127.0.0.1:8080
+      JAVA_TOOL_OPTIONS: -Xms256m -Xmx1536m
+      MCP_PORT: "3000"
+      BRIDGE_PORT: "8080"
+    volumes:
+      - /Users/mgeissbu/Itignos/1-Projets/20260709_opensource_swiss-ambulatory-grouper-mcp/output:/data/output:ro
+    ports:
+      - "3000:3000"

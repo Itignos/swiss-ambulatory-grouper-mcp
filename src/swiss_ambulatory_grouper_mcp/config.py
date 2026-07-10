@@ -130,24 +130,23 @@ def build_input_files(source_dir: Path, year: str, icd_year: str) -> dict[str, P
         },
     }
 
-    inputs = oaat_by_year.get(
-        year,
-        {
-            "lkaat_db": oaat_year_dir / "lkaat.sqlite",
-            "tardoc_db": oaat_year_dir / "tardoc.sqlite",
-            "ambp_file": oaat_year_dir / "ambp.csv",
-        },
-    ).copy()
-    inputs.update(
-        icd_by_year.get(
-            icd_year,
-            {
-                "icd10_de_claml": bfs_year_dir / "icd10" / "de" / "icd10_de_claml.xml",
-                "icd10_fr_claml": bfs_year_dir / "icd10" / "fr" / "icd10_fr_claml.xml",
-                "icd10_it_claml": bfs_year_dir / "icd10" / "it" / "icd10_it_claml.xml",
-            },
+    if year not in oaat_by_year:
+        supported_years = ", ".join(sorted(oaat_by_year))
+        raise ValueError(
+            f"Unsupported OAAT tariff year {year!r}. "
+            f"Supported years: {supported_years}. "
+            "Add the official OAAT source filenames for this year to config.py before building."
         )
-    )
+    if icd_year not in icd_by_year:
+        supported_icd_years = ", ".join(sorted(icd_by_year))
+        raise ValueError(
+            f"Unsupported BFS ICD/CIM source year {icd_year!r}. "
+            f"Supported years: {supported_icd_years}. "
+            "Add the official BFS ClaML source filenames for this year to config.py before building."
+        )
+
+    inputs = oaat_by_year[year].copy()
+    inputs.update(icd_by_year[icd_year])
     return inputs
 
 

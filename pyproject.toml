@@ -19,6 +19,7 @@ excel = ["openpyxl>=3.1"]
 [project.scripts]
 swiss-ambulatory-build-db = "swiss_ambulatory_grouper_mcp.main:cli"
 swiss-ambulatory-check-sources = "swiss_ambulatory_grouper_mcp.source_inventory:cli"
+swiss-ambulatory-prepare-tarifmatcher = "swiss_ambulatory_grouper_mcp.tarifmatcher_prepare:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

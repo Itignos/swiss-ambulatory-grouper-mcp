@@ -131,13 +131,16 @@ def cli(argv: list[str] | None = None) -> int:
     parser.add_argument("--icd-year", default=None, help="Use ICD/CIM source files from this BFS year.")
     parser.add_argument("--requirements", action="store_true", help="Print Markdown requirements instead of status.")
     args = parser.parse_args(argv)
-    config = build_config(
-        year=args.year,
-        data_dir=args.data_dir,
-        source_dir=args.source_dir,
-        output_dir=args.output_dir,
-        icd_year=args.icd_year,
-    )
+    try:
+        config = build_config(
+            year=args.year,
+            data_dir=args.data_dir,
+            source_dir=args.source_dir,
+            output_dir=args.output_dir,
+            icd_year=args.icd_year,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.requirements:
         print(requirements_markdown(config), end="")
         return 0

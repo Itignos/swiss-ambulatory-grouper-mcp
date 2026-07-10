@@ -1,6 +1,6 @@
 # Swiss Ambulatory Grouper MCP
 
-Open-source tooling to build a **local SQLite database** for the Swiss ambulatory tariff system from officially obtained source files. A Model Context Protocol (MCP) server will be added later on top of this database; this first project phase focuses on reproducible local data preparation.
+Open-source tooling to build a **local SQLite database** for the Swiss ambulatory tariff system from officially obtained source files, plus a local Docker runtime for OAAT TarifMatcher grouping/mapping and SQLite-backed catalogue lookup services.
 
 > [!IMPORTANT]
 > This repository contains **no OAAT tariff data**, **no BFS ICD-10/CIM-10 source files**, and **no generated SQLite database**. The scripts are public; the official source files and generated outputs must stay outside GitHub. These source files are subject to their own licenses, terms of use, and/or access conditions, so they cannot be redistributed from this repository.
@@ -126,10 +126,36 @@ The first phase imports only:
 
 Not included yet:
 
-- MCP server tools
-- AmbP simulation/grouper execution
+- Casemaster adapter execution
+- production MCP transport wiring beyond the current local HTTP runtime
 - Itignos-specific lookup/transcoding/fuzzy matching
 - proprietary/manual correction datasets
+
+## Local Docker runtime
+
+A local Docker runtime is available for grouping, mapping, and catalogue lookup. It runs one combined container with:
+
+- Python MCP/runtime HTTP process
+- Java TarifMatcher bridge process
+- private runtime files mounted from the local non-git `output/` directory
+- generated SQLite database mounted read-only for LKAAT/ICD-10 lookup
+
+Prepare the official OAAT TarifMatcher ZIPs from your private `sources/` directory into `output/runtime/`:
+
+```bash
+python scripts/prepare_tarifmatcher_runtime.py \
+  --source-dir /absolute/path/to/sources \
+  --output-dir /absolute/path/to/output
+```
+
+Then start locally:
+
+```bash
+docker compose -f docker-compose.example.yml up --build
+curl http://localhost:3000/health
+```
+
+The current Java bridge loads the official OAAT TarifMatcher JAR at runtime and wires the Grouper and Mapper APIs. The Python runtime also exposes SQLite-backed lookup endpoints for LKAAT service search/details and ICD-10 diagnosis search. Casemaster remains a structured placeholder until its adapter is implemented. See [`docs/local-docker-runtime.md`](docs/local-docker-runtime.md).
 
 ## Development
 

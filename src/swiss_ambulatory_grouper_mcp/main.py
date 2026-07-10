@@ -107,13 +107,16 @@ def cli(argv: list[str] | None = None) -> int:
     parser.add_argument("--icd-year", default=None, help="Use ICD/CIM source files from this BFS year, e.g. 2026 for a 2027 tariff build.")
     parser.add_argument("--force", action="store_true", help="Overwrite an existing output SQLite database.")
     args = parser.parse_args(argv)
-    config = build_config(
-        year=args.year,
-        data_dir=args.data_dir,
-        source_dir=args.source_dir,
-        output_dir=args.output_dir,
-        icd_year=args.icd_year,
-    )
+    try:
+        config = build_config(
+            year=args.year,
+            data_dir=args.data_dir,
+            source_dir=args.source_dir,
+            output_dir=args.output_dir,
+            icd_year=args.icd_year,
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     build_database(config, force=args.force)
     return 0
 
